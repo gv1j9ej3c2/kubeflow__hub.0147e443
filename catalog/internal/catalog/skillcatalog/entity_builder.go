@@ -32,8 +32,12 @@ func buildSkillEntity(resolved ResolvedSkill, repo SkillRepository, sourceID str
 	category := repo.Category
 	labels := repo.Labels
 	if ov := findSkillOverride(repo.SkillOverrides, parsed.Name); ov != nil {
-		category = ov.Category
-		labels = ov.Labels
+		if ov.Category != "" {
+			category = ov.Category
+		}
+		if len(ov.Labels) > 0 {
+			labels = ov.Labels
+		}
 	}
 
 	props := []dbmodels.Properties{}
@@ -54,12 +58,12 @@ func buildSkillEntity(resolved ResolvedSkill, repo SkillRepository, sourceID str
 	addStringSlice(&props, propLabels, labels)
 	addStringSlice(&props, propAllowedTools, parsed.AllowedTools)
 	addStringSlice(&props, propSupportingFiles, resolved.SupportingFiles)
-	addInt(&props, propBodyLineCount, int32(parsed.BodyLineCount+1))
+	addInt(&props, propBodyLineCount, int32(parsed.BodyLineCount))
 	addString(&props, propConfigDigest, configDigest(repo))
 
 	custom := customPropertiesFromMetadata(parsed.Metadata)
 
-	name := skillEntityName(sourceID, resolved.Path, resolved.Repository, resolved.Version)
+	name := skillEntityName(sourceID, resolved.Repository, resolved.Path, resolved.Version)
 	return &skillmodels.SkillImpl{
 		Attributes: &skillmodels.SkillAttributes{
 			Name:       &name,

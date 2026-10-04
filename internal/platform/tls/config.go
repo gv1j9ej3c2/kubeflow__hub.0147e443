@@ -32,7 +32,7 @@ func (c *TLSConfig) BuildTLSConfig() (*tls.Config, error) {
 	var rootCAs *x509.CertPool
 	var err error
 
-	if c.RootCertPath != "" && c.CAPath != "" {
+	if c.RootCertPath != "" || c.CAPath != "" {
 		rootCAs = x509.NewCertPool()
 
 		if c.RootCertPath != "" {
@@ -63,12 +63,12 @@ func (c *TLSConfig) BuildTLSConfig() (*tls.Config, error) {
 
 	tlsConfig := &tls.Config{
 		RootCAs:            rootCAs,
-		InsecureSkipVerify: c.VerifyServerCert,
+		InsecureSkipVerify: !c.VerifyServerCert,
 		MinVersion:         tls.VersionTLS12,
 	}
 
 	if c.CertPath != "" && c.KeyPath != "" {
-		cert, err := tls.LoadX509KeyPair(c.KeyPath, c.CertPath)
+		cert, err := tls.LoadX509KeyPair(c.CertPath, c.KeyPath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load SSL certificate pair (cert: %s, key: %s): %w",
 				c.CertPath, c.KeyPath, err)
